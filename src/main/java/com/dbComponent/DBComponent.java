@@ -1,7 +1,8 @@
 package com.dbComponent;
 
-import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.ext.mongo.MongoClient;
 
 public interface DBComponent {
-    public Future<Void> prepareDB();
+    public MongoClient prepareDB(Vertx vertx);
 }

@@ -1,9 +1,15 @@
 package com.server;
 
-import io.vertx.core.http.HttpServer;
+import com.dbComponent.DBComponentManager;
+import com.dbComponent.MongoDBComponent;
+import io.vertx.core.AbstractVerticle;
 import io.vertx.core.Future;
+import io.vertx.core.Vertx;
+import io.vertx.core.http.HttpServer;
+import io.vertx.core.json.JsonObject;
+import io.vertx.ext.mongo.MongoClient;
 
-public class HttpServerService implements ServerService {
+public class HttpServerService {
 
     private HttpServerService(){}
 
@@ -12,7 +18,8 @@ public class HttpServerService implements ServerService {
         return future;
     }
 
-    public HttpServer createServerService() {
+    public HttpServer createServerService(Vertx vertx) {
+        MongoDBComponent.getSingletonComponent().prepareDB(vertx);
         return null;
     }
 
