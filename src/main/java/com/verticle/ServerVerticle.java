@@ -15,14 +15,15 @@ import io.vertx.ext.mongo.MongoClient;
 import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
+import java.util.List;
+import java.util.stream.Collectors;
+
 
 public class ServerVerticle extends AbstractVerticle{
 
     @Override
     public void start(Future<Void> startFuture) throws Exception {
-
-        //Future<Void> steps = MongoDBComponent.getSingletonComponent().prepareDB(vertx).compose(v -> HttpServerService.httpServerServiceSingleton().startServer());
-        //steps.setHandler(startFuture.completer());
+        startHttpServer();
     }
 
     @Override
@@ -48,7 +49,7 @@ public class ServerVerticle extends AbstractVerticle{
                 if (ar.failed()) routingContext.response().setStatusCode(HttpServerResponseCode.NOT_FOUND.getCode()).end();
                 else {
                     routingContext.response().putHeader("content-type", "application/json; utf-8")
-                    .end(Json.encodePrettily(new Dish(Double.parseDouble(json.getString("price")), json.getString("name"), Long.parseLong(id))));
+                    .end(Json.encodePrettily(new Dish(Double.parseDouble(json.getString("price")), json.getString("name"), id)));
                 }
             });
         }
@@ -60,13 +61,22 @@ public class ServerVerticle extends AbstractVerticle{
 
     private void indexHandler(RoutingContext routingContext)
     {
-
+        MongoClient mongoClient = MongoDBComponent.getSingletonComponent().prepareDB(vertx);
+        mongoClient.find("Dishes", new JsonObject(), results -> {
+            List<JsonObject> objects = results.result();
+            List<Dish> dishes = objects
+                .stream()
+                .map(jsonOj -> new Dish(Double.parseDouble(jsonOj.getString("price")), jsonOj.getString("name"), jsonOj.getString("_id")))
+                .collect(Collectors.toList());
+            routingContext.response().putHeader("content-type", "application/json; utf-8").end(Json.encodePrettily(dishes));
+        });
     }
 
     private Router configRouter()
     {
         Router router = Router.router(vertx);
         router.get("/").handler(this::indexHandler);
+        router.get("/dishes/:dishID").handler(this::indexHandler);
         router.post("/dishes/save/:dishID").handler(this::updateHandler);
         router.put("/dishes/create").handler(this::creationHandler);
         router.delete("/dishes/delete/:dishID").handler(this::deleteHandler);
