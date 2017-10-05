@@ -1,6 +1,7 @@
 package com.verticle;
 
 import com.dbComponent.MongoDBComponent;
+import com.factory.DataFactory;
 import com.models.Dish;
 import com.models.EntityWithID;
 import com.server.HttpServerResponseCode;
@@ -16,6 +17,7 @@ import io.vertx.ext.web.Router;
 import io.vertx.ext.web.RoutingContext;
 
 import java.util.List;
+import java.util.Vector;
 import java.util.stream.Collectors;
 
 
@@ -66,10 +68,25 @@ public class ServerVerticle extends AbstractVerticle{
             List<JsonObject> objects = results.result();
             List<Dish> dishes = objects
                 .stream()
-                .map(jsonOj -> new Dish(Double.parseDouble(jsonOj.getString("price")), jsonOj.getString("name"), jsonOj.getString("_id")))
+                .map(jsonOj -> createData(Dish.class, jsonOj))
                 .collect(Collectors.toList());
+            /*List<Dish> dishes = new Vector<>();
+            for (JsonObject json : objects)
+            {
+                JsonObject id = (JsonObject) json.getValue("_id");
+
+                System.out.println(id.getString("$oid"));
+                System.out.println(json.getString("name"));
+                System.out.println(json.getDouble("price"));
+            }*/
             routingContext.response().putHeader("content-type", "application/json; utf-8").end(Json.encodePrettily(dishes));
         });
+    }
+
+    private <Type extends EntityWithID> Type createData(Class<Type> anEntityClass, JsonObject aJson)
+    {
+
+        return DataFactory.createEntityWithArguments(anEntityClass, aJson.getDouble("price").doubleValue(), aJson.getString("name"), ((JsonObject) aJson.getValue("_id")).getString("$oid"));
     }
 
     private Router configRouter()

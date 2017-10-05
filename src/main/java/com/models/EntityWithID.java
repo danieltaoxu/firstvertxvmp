@@ -1,6 +1,6 @@
 package com.models;
 
-public abstract class EntityWithID {
+public class EntityWithID {
 
-  protected String id;
+
 }
